@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "scraperag"
 version = "0.1.0"
-description = "Transform HTML doc dumps into clean Markdown for RAG systems"
+description = "Transform HTML and PDF doc dumps into clean Markdown for RAG systems"
 requires-python = ">=3.10"
 dependencies = [
     "typer[all]>=0.12",
@@ -15,6 +15,9 @@ dependencies = [
     "tqdm>=4.66",
     "chardet>=5.2",
 ]
+
+[project.optional-dependencies]
+pdf = ["markitdown[pdf]>=0.1"]
 
 [project.scripts]
 scraperag = "scraperag.cli:app"

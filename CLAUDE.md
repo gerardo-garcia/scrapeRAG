@@ -4,13 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-**ScrapeRAG** converts a directory tree of HTML files (e.g., a product API manual) into clean Markdown files suitable for ingestion into RAG systems via SharePoint or similar connectors. It removes navigation/sidebar/footer boilerplate, deduplicates near-identical pages, and preserves tables and code blocks.
+**ScrapeRAG** converts a directory tree of HTML and PDF files (e.g., a product API manual) into clean Markdown files suitable for ingestion into RAG systems via SharePoint or similar connectors. It removes navigation/sidebar/footer boilerplate, deduplicates near-identical pages, and preserves tables and code blocks. HTML is parsed with BS4 + markdownify; PDFs are converted with [markitdown](https://github.com/microsoft/markitdown).
 
 ## Install and run
 
 ```bash
 # Install in editable mode (creates the `scraperag` CLI)
 pip install -e .
+
+# PDF support is an optional extra (pulls in markitdown)
+pip install -e '.[pdf]'
 
 # Run the pipeline
 scraperag <input-dir> <output-dir>
@@ -29,8 +32,9 @@ scraperag <input-dir> <output-dir> \
 scraperag/
 ├── cli.py        # Typer CLI entry point → scraperag command
 ├── pipeline.py   # Orchestrates the full pipeline (order matters — see below)
-├── crawler.py    # Discovers HTML files, handles encoding detection
+├── crawler.py    # Discovers HTML+PDF source files, handles encoding detection
 ├── extractor.py  # BS4 + markdownify: strips nav/header/footer, extracts main content
+├── pdf.py        # PDF → Markdown via markitdown (lazy import; optional [pdf] extra)
 ├── dedup.py      # Exact dedup (MD5) + near-dedup (SimHash on 3-shingles) + boilerplate removal
 └── writer.py     # Writes .md files preserving input directory structure, adds YAML frontmatter
 ```
@@ -39,7 +43,7 @@ scraperag/
 
 The order in `pipeline.py` is intentional and must be preserved:
 
-1. **Extract** — BS4 removes nav/header/footer selectors, then markdownify converts to Markdown
+1. **Extract** — dispatched by file type: HTML goes through BS4 (removes nav/header/footer selectors) + markdownify; PDF goes through markitdown. PDFs get a top-level heading synthesized from their title when the converted text lacks one.
 2. **Filter** — drop pages below `--min-words`
 3. **Deduplicate** — exact + near-dup removal (must happen **before** boilerplate, so duplicates don't inflate block counts)
 4. **Boilerplate removal** — paragraph-level frequency analysis; blocks appearing in > `--boilerplate-ratio` of pages and longer than 40 chars are stripped

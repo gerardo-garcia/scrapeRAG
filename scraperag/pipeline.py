@@ -2,8 +2,9 @@ from pathlib import Path
 import typer
 from tqdm import tqdm
 
-from .crawler import find_html_files, read_html
+from .crawler import find_source_files, is_pdf, read_html
 from .extractor import extract, word_count
+from .pdf import extract_pdf
 from .dedup import remove_boilerplate, deduplicate
 from .writer import write_pages
 
@@ -16,15 +17,17 @@ def run(
     boilerplate_ratio: float = 0.4,
     verbose: bool = False,
 ) -> None:
-    html_files = find_html_files(input_dir)
-    typer.echo(f"Found {len(html_files)} HTML files in {input_dir}")
+    source_files = find_source_files(input_dir)
+    typer.echo(f"Found {len(source_files)} source files (HTML/PDF) in {input_dir}")
 
     pages: list[dict] = []
     skipped_short = 0
 
-    for f in tqdm(html_files, desc="Extracting", unit="file"):
-        html = read_html(f)
-        title, content = extract(html)
+    for f in tqdm(source_files, desc="Extracting", unit="file"):
+        if is_pdf(f):
+            title, content = extract_pdf(f)
+        else:
+            title, content = extract(read_html(f))
         if word_count(content) < min_words:
             skipped_short += 1
             if verbose:

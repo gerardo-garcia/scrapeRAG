@@ -63,7 +63,11 @@ def extract(html: str) -> tuple[str, str]:
 
     raw_md = md_lib.markdownify(str(content), heading_style="ATX", bullets="-", strip=["img"])
 
-    # Collapse 3+ consecutive blank lines → 2, strip trailing spaces per line
+    return title, tidy_markdown(raw_md)
+
+
+def tidy_markdown(raw_md: str) -> str:
+    """Collapse 3+ consecutive blank lines → 2 and strip trailing whitespace."""
     lines = [ln.rstrip() for ln in raw_md.splitlines()]
     cleaned: list[str] = []
     blank_run = 0
@@ -76,7 +80,7 @@ def extract(html: str) -> tuple[str, str]:
             blank_run = 0
             cleaned.append(ln)
 
-    return title, "\n".join(cleaned).strip()
+    return "\n".join(cleaned).strip()
 
 
 def word_count(text: str) -> int:

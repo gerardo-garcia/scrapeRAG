@@ -5,7 +5,7 @@ import typer
 from .pipeline import run
 
 app = typer.Typer(
-    help="Transform HTML doc dumps into clean Markdown for RAG systems.",
+    help="Transform HTML and PDF doc dumps into clean Markdown for RAG systems.",
     add_completion=False,
 )
 
@@ -14,7 +14,7 @@ app = typer.Typer(
 def main(
     input_dir: Annotated[
         Path,
-        typer.Argument(help="Directory containing HTML files to process", exists=True, file_okay=False),
+        typer.Argument(help="Directory containing HTML and/or PDF files to process", exists=True, file_okay=False),
     ],
     output_dir: Annotated[
         Path,
